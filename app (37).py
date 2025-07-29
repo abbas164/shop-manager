@@ -26,10 +26,10 @@ def allowed_file(filename):
 # اتصال به دیتابیس
 def get_db_connection():
     return psycopg2.connect(
-        host='yourdbhost.postgres.render.com',  # از داشبورد Render کپی کن
-        database='yourdb',                     # از داشبورد Render کپی کن
-        user='youruser',                       # از داشبورد Render کپی کن
-        password='yourpassword',               # از داشبورد Render کپی کن
+        host='dpg-d24kfnre5dus73dcpva0-a',  # از داشبورد Render کپی کن
+        database='shop_u2sf',                     # از داشبورد Render کپی کن
+        user='shop_u2sf_user',                       # از داشبورد Render کپی کن
+        password='xnTOqMelH98OzbHfTbS9Zf9KHTpA4LLS',               # از داشبورد Render کپی کن
         port='5432'
     )
 
