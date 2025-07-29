@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
-import mysql.connector
+import psycopg2
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 import os
@@ -25,13 +25,12 @@ def allowed_file(filename):
 
 # اتصال به دیتابیس
 def get_db_connection():
-    return mysql.connector.connect(
-        host='localhost',
-        user='root',
-        password='',  # رمز عبور MySQL خود را وارد کنید
-        database='shop',
-        charset='utf8mb4',
-        autocommit=True
+    return psycopg2.connect(
+        host='yourdbhost.postgres.render.com',  # از داشبورد Render کپی کن
+        database='yourdb',                     # از داشبورد Render کپی کن
+        user='youruser',                       # از داشبورد Render کپی کن
+        password='yourpassword',               # از داشبورد Render کپی کن
+        port='5432'
     )
 
 # تابع گرفتن توکن امنیتی از sms.ir
