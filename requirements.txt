@@ -1,1 +1,6 @@
-Flask==3.0.0 psycopg2-binary requests werkzeug jdatetime gunicorn
+Flask==3.0.0
+psycopg2-binary
+requests
+werkzeug
+jdatetime
+gunicorn
