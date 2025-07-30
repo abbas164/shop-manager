@@ -1,0 +1,62 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>مدیریت فروشگاه</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>لیست مشتریان</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    <form method="POST" action="/">
+        <input type="text" name="search" placeholder="جستجو..." value="{{ search_query }}">
+        <button type="submit">جستجو</button>
+    </form>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>شناسه</th>
+                <th>نام</th>
+                <th>شماره تلفن</th>
+                <th>مانده حساب</th>
+                <th>وضعیت</th>
+                <th>آخرین تراکنش</th>
+                <th>نوع تراکنش</th>
+                <th>عملیات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.id }}</td>
+                    <td>{{ customer.name }}</td>
+                    <td>{{ customer.phone }}</td>
+                    <td>{{ "{:,.0f}".format(customer.balance|default(0)|abs) }}</td>
+                    <td>{{ customer.balance_status }}</td>
+                    <td>{{ customer.last_transaction_date }}</td>
+                    <td>{{ customer.last_transaction_type }}</td>
+                    <td>
+                        <a href="{{ url_for('customer_details', customer_id=customer.id) }}">نمایش</a>
+                        <a href="{{ url_for('edit_customer', id=customer.id) }}">ویرایش</a>
+                        <form action="{{ url_for('delete_customer', id=customer.id) }}" method="POST" style="display:inline;">
+                            <button type="submit" onclick="return confirm('مطمئنی؟')">حذف</button>
+                        </form>
+                        <a href="{{ url_for('send_sms_route', customer_id=customer.id) }}">پیامک</a>
+                        <a href="{{ url_for('send_whatsapp', customer_id=customer.id) }}">واتس‌اپ</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('add_customer') }}">افزودن مشتری</a>
+    <a href="{{ url_for('add_transaction') }}">افزودن تراکنش</a>
+    <a href="{{ url_for('reports') }}">گزارش‌ها</a>
+</body>
+</html>
