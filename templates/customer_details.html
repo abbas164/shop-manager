@@ -73,7 +73,7 @@
                 <p><strong>جمع پرداخت‌ها:</strong> {{ '{:,.0f}'.format(customer.total_debit) }} تومان</p>
             </div>
             <div class="mb-4">
-                <a href="{{ url_for('send_sms', customer_id=customer.id) }}" class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 mr-2">ارسال پیامک</a>
+                <a href="{{ url_for('send_sms_route', customer_id=customer.id) }}" class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 mr-2">ارسال پیامک</a>
                 <a href="{{ url_for('send_whatsapp', customer_id=customer.id) }}" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">ارسال واتس‌اپ</a>
             </div>
             <div>
