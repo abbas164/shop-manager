@@ -1,4 +1,4 @@
-<script type="text/javascript">
+﻿<script type="text/javascript">
         var gk_isXlsx = false;
         var gk_xlsxFileLookup = {};
         var gk_fileData = {};
@@ -122,7 +122,7 @@
                         <tr>
                             <td><a href="{{ url_for('customer_details', customer_id=customer.id) }}">{{ customer.name }}</a></td>
                             <td>{{ customer.phone }}</td>
-                            <td>{{ "{:,.0f}".format(customer.balance|abs) }}</td>
+                            <td>{{ "{:,.0f}".format(customer.balance|default(0)|abs) }}</td>
                             <td>{{ customer.balance_status }}</td>
                             <td>{{ "{:,.0f}".format(customer.last_transaction|abs) }}</td>
                             <td>{{ customer.last_transaction_type }}</td>
