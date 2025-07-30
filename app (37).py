@@ -213,7 +213,7 @@ def customer_details(customer_id):
         WHERE customer_id = %s
     """, (customer_id,))
     result = cursor.fetchone()
-    customer['balance'] = result['balance'] if result else 0  # اصلاح اینجا
+    customer['balance'] = result['balance'] if result and 'balance' in result else 0  # اصلاح دقیق‌تر
     customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
     cursor.execute("""
@@ -224,8 +224,8 @@ def customer_details(customer_id):
         WHERE customer_id = %s
     """, (customer_id,))
     totals = cursor.fetchone()
-    customer['total_credit'] = totals['total_credit']
-    customer['total_debit'] = totals['total_debit']
+    customer['total_credit'] = totals['total_credit'] if totals and 'total_credit' in totals else 0
+    customer['total_debit'] = totals['total_debit'] if totals and 'total_debit' in totals else 0
 
     cursor.execute("""
         SELECT id, amount, note, date, photo,
@@ -265,7 +265,7 @@ def index():
             WHERE customer_id = %s
         """, (customer['id'],))
         result = cursor.fetchone()
-        customer['balance'] = result['balance'] if result else 0  # اصلاح اینجا
+        customer['balance'] = result['balance'] if result and 'balance' in result else 0  # اصلاح دقیق‌تر
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
         cursor.execute("""
@@ -317,7 +317,9 @@ def reports():
             HAVING SUM(amount) > 0
         ) AS balances
     """)
-    total_debt = cursor.fetchone()['total_debt']
+    result = cursor.fetchone()
+    total_debt = result['total_debt'] if result and 'total_debt' in result else 0
+
     cursor.execute("""
         SELECT COUNT(*) AS debtor_count
         FROM (
@@ -327,7 +329,9 @@ def reports():
             HAVING SUM(amount) > 0
         ) AS debtors
     """)
-    debtor_count = cursor.fetchone()['debtor_count']
+    result = cursor.fetchone()
+    debtor_count = result['debtor_count'] if result and 'debtor_count' in result else 0
+
     cursor.execute("""
         SELECT c.id, c.name, c.phone, COALESCE(SUM(t.amount), 0) AS balance
         FROM customers c
@@ -339,6 +343,7 @@ def reports():
     for customer in customer_balances:
         customer['balance_display'] = abs(customer['balance'])
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
+
     cursor.execute("""
         SELECT c.id, c.name, c.phone, COALESCE(SUM(t.amount), 0) AS balance
         FROM customers c
@@ -349,6 +354,7 @@ def reports():
         LIMIT 5
     """)
     top_debtors = cursor.fetchall()
+
     thirty_days_ago = datetime.now() - timedelta(days=30)
     cursor.execute("""
         SELECT c.id, c.name, c.phone, t.amount, t.date
@@ -362,6 +368,7 @@ def reports():
         customer['date_shamsi'] = jdatetime.datetime.fromgregorian(
             datetime=customer['date']
         ).strftime("%Y/%m/%d")
+
     conn.close()
     return render_template('reports.html', 
                          total_debt=total_debt,
