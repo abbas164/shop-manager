@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -45,29 +6,49 @@
     <title>افزودن تراکنش</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-        <header class="bg-blue-600 text-white p-4 rounded-lg mb-4 shadow-lg">
-            <h1 class="text-2xl font-bold">افزودن تراکنش جدید</h1>
-            <a href="{{ url_for('index') }}" class="text-white hover:underline mt-2 inline-block">بازگشت به صفحه اصلی</a>
-        </header>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="navbar fixed top-0 w-full z-10">
+        <div class="container mx-auto p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">فروشگاه لوازم ساختمانی آزادی</h1>
+            <div class="hidden md:flex space-x-4">
+                <a href="{{ url_for('index') }}" class="navbar-item">صفحه اصلی</a>
+                <a href="{{ url_for('add_customer') }}" class="navbar-item">افزودن مشتری</a>
+                <a href="{{ url_for('add_transaction') }}" class="navbar-item bg-blue-600">افزودن تراکنش</a>
+                <a href="{{ url_for('reports') }}" class="navbar-item">گزارش‌ها</a>
+            </div>
+            <button class="md:hidden text-white focus:outline-none" onclick="toggleMenu()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden navbar-mobile">
+            <a href="{{ url_for('index') }}" class="block navbar-item">صفحه اصلی</a>
+            <a href="{{ url_for('add_customer') }}" class="block navbar-item">افزودن مشتری</a>
+            <a href="{{ url_for('add_transaction') }}" class="block navbar-item bg-blue-600">افزودن تراکنش</a>
+            <a href="{{ url_for('reports') }}" class="block navbar-item">گزارش‌ها</a>
+        </div>
+    </nav>
 
+    <div class="container mx-auto p-4 pt-20">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }}">
+                    <div class="mb-4 p-4 rounded-lg {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }} shadow-md">
                         {{ message }}
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <div class="bg-white p-6 rounded-lg shadow-lg">
+        <div class="bg-white p-6 rounded-lg shadow-lg max-w-lg mx-auto">
+            <h2 class="text-xl font-semibold mb-4">افزودن تراکنش جدید</h2>
             <form method="POST" enctype="multipart/form-data" class="space-y-4">
                 <div>
                     <label for="customer_id" class="block text-sm font-medium text-gray-700">مشتری</label>
-                    <select name="customer_id" id="customer_id" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <select name="customer_id" id="customer_id" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
                         {% for customer in customers %}
                             <option value="{{ customer.id }}">{{ customer.name }} ({{ customer.phone }})</option>
                         {% endfor %}
@@ -75,32 +56,39 @@
                 </div>
                 <div>
                     <label for="amount" class="block text-sm font-medium text-gray-700">مبلغ (تومان)</label>
-                    <input type="number" name="amount" id="amount" step="0.01" required class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" name="amount" id="amount" step="0.01" required class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700">نوع تراکنش</label>
                     <div class="flex space-x-4">
                         <label class="inline-flex items-center">
-                            <input type="radio" name="transaction_type" value="credit" checked class="form-radio">
+                            <input type="radio" name="transaction_type" value="credit" checked class="form-radio text-blue-600">
                             <span class="ml-2">خرید (بدهی)</span>
                         </label>
                         <label class="inline-flex items-center">
-                            <input type="radio" name="transaction_type" value="debit" class="form-radio">
+                            <input type="radio" name="transaction_type" value="debit" class="form-radio text-blue-600">
                             <span class="ml-2">پرداخت</span>
                         </label>
                     </div>
                 </div>
                 <div>
                     <label for="note" class="block text-sm font-medium text-gray-700">توضیحات</label>
-                    <textarea name="note" id="note" class="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    <textarea name="note" id="note" class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"></textarea>
                 </div>
                 <div>
                     <label for="photo" class="block text-sm font-medium text-gray-700">عکس (اختیاری)</label>
-                    <input type="file" name="photo" id="photo" accept="image/*" class="w-full p-2 border rounded-lg">
+                    <input type="file" name="photo" id="photo" accept="image/*" class="w-full p-3 border rounded-lg">
                 </div>
-                <button type="submit" class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700">ثبت تراکنش</button>
+                <button type="submit" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-300">ثبت تراکنش</button>
             </form>
         </div>
     </div>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>

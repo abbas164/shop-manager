@@ -1,43 +1,4 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
@@ -45,18 +6,37 @@
     <title>جزئیات مشتری</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4">
-        <header class="bg-blue-600 text-white p-4 rounded-lg mb-4 shadow-lg">
-            <h1 class="text-2xl font-bold">جزئیات مشتری: {{ customer.name }}</h1>
-            <a href="{{ url_for('index') }}" class="text-white hover:underline mt-2 inline-block">بازگشت به صفحه اصلی</a>
-        </header>
+<body class="bg-gray-50 min-h-screen">
+    <nav class="navbar fixed top-0 w-full z-10">
+        <div class="container mx-auto p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold">فروشگاه لوازم ساختمانی آزادی</h1>
+            <div class="hidden md:flex space-x-4">
+                <a href="{{ url_for('index') }}" class="navbar-item">صفحه اصلی</a>
+                <a href="{{ url_for('add_customer') }}" class="navbar-item">افزودن مشتری</a>
+                <a href="{{ url_for('add_transaction') }}" class="navbar-item">افزودن تراکنش</a>
+                <a href="{{ url_for('reports') }}" class="navbar-item">گزارش‌ها</a>
+            </div>
+            <button class="md:hidden text-white focus:outline-none" onclick="toggleMenu()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                </svg>
+            </button>
+        </div>
+        <div id="mobile-menu" class="hidden md:hidden navbar-mobile">
+            <a href="{{ url_for('index') }}" class="block navbar-item">صفحه اصلی</a>
+            <a href="{{ url_for('add_customer') }}" class="block navbar-item">افزودن مشتری</a>
+            <a href="{{ url_for('add_transaction') }}" class="block navbar-item">افزودن تراکنش</a>
+            <a href="{{ url_for('reports') }}" class="block navbar-item">گزارش‌ها</a>
+        </div>
+    </nav>
 
+    <div class="container mx-auto p-4 pt-20">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }}">
+                    <div class="mb-4 p-4 rounded-lg {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }} shadow-md">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -64,7 +44,8 @@
         {% endwith %}
 
         <div class="bg-white p-6 rounded-lg shadow-lg">
-            <div class="mb-4">
+            <h2 class="text-xl font-semibold mb-4">جزئیات مشتری: {{ customer.name }}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <p><strong>نام:</strong> {{ customer.name }}</p>
                 <p><strong>تلفن:</strong> {{ customer.phone }}</p>
                 <p><strong>مانده حساب:</strong> {{ '{:,.0f}'.format(customer.balance) }} تومان</p>
@@ -72,42 +53,51 @@
                 <p><strong>جمع خریدها:</strong> {{ '{:,.0f}'.format(customer.total_credit) }} تومان</p>
                 <p><strong>جمع پرداخت‌ها:</strong> {{ '{:,.0f}'.format(customer.total_debit) }} تومان</p>
             </div>
-            <div class="mb-4">
-                <a href="{{ url_for('send_sms_route', customer_id=customer.id) }}" class="bg-green-600 text-white p-2 rounded-lg hover:bg-green-700 mr-2">ارسال پیامک</a>
-                <a href="{{ url_for('send_whatsapp', customer_id=customer.id) }}" class="bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">ارسال واتس‌اپ</a>
+            <div class="mb-4 flex space-x-4">
+                <a href="{{ url_for('send_sms_route', customer_id=customer.id) }}" class="bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition duration-300">ارسال پیامک</a>
+                <a href="{{ url_for('send_whatsapp', customer_id=customer.id) }}" class="bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition duration-300">ارسال واتس‌اپ</a>
             </div>
             <div>
-                <h2 class="text-xl font-semibold mb-2">تراکنش‌ها</h2>
-                <table class="w-full text-right">
-                    <thead>
-                        <tr class="bg-gray-200">
-                            <th class="p-2">مبلغ</th>
-                            <th class="p-2">توضیحات</th>
-                            <th class="p-2">تاریخ</th>
-                            <th class="p-2">نوع</th>
-                            <th class="p-2">عکس</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for transaction in transactions %}
-                        <tr class="border-b hover:bg-gray-100">
-                            <td class="p-2">{{ '{:,.0f}'.format(transaction.amount) }} تومان</td>
-                            <td class="p-2">{{ transaction.note|default('بدون توضیح') }}</td>
-                            <td class="p-2">{{ transaction.date_shamsi }}</td>
-                            <td class="p-2">{{ transaction.transaction_type }}</td>
-                            <td class="p-2">
-                                {% if transaction.photo %}
-                                    <a href="{{ url_for('static', filename='uploads/' + transaction.photo) }}" target="_blank" class="text-blue-600 hover:underline">نمایش</a>
-                                {% else %}
-                                    -
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                <h3 class="text-lg font-semibold mb-2">تراکنش‌ها</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-right">
+                        <thead>
+                            <tr class="bg-blue-100">
+                                <th class="p-3">مبلغ</th>
+                                <th class="p-3">توضیحات</th>
+                                <th class="p-3">تاریخ</th>
+                                <th class="p-3">نوع</th>
+                                <th class="p-3">عکس</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transaction in transactions %}
+                            <tr class="border-b hover:bg-blue-50 transition duration-200">
+                                <td class="p-3">{{ '{:,.0f}'.format(transaction.amount) }} تومان</td>
+                                <td class="p-3">{{ transaction.note|default('بدون توضیح') }}</td>
+                                <td class="p-3">{{ transaction.date_shamsi }}</td>
+                                <td class="p-3">{{ transaction.transaction_type }}</td>
+                                <td class="p-3">
+                                    {% if transaction.photo %}
+                                        <a href="{{ url_for('static', filename='uploads/' + transaction.photo) }}" target="_blank" class="text-blue-600 hover:underline">نمایش</a>
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+
+    <script>
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        }
+    </script>
 </body>
 </html>

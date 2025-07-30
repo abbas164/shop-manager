@@ -5,10 +5,21 @@
 @font-face {
     font-family: 'Iransans';
     src: url('../fonts/IRANSansWeb.ttf') format('truetype');
-    /* ??? .woff2 ????? ??? ?? ?? ?? ????? ??: */
-    /* src: url('../fonts/IRANSansWeb.woff2') format('woff2'); */
 }
 
 body {
     font-family: 'Iransans', sans-serif;
+}
+
+/* ?????????? ????? ???? navbar */
+.navbar {
+    @apply bg-blue-800 text-white shadow-lg;
+}
+
+.navbar-item {
+    @apply px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-300;
+}
+
+.navbar-mobile {
+    @apply absolute top-16 right-0 bg-blue-800 w-48 rounded-lg shadow-lg mt-2;
 }
