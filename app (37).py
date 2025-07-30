@@ -213,7 +213,10 @@ def customer_details(customer_id):
         WHERE customer_id = %s
     """, (customer_id,))
     result = cursor.fetchone()
-    customer['balance'] = result['balance'] if result and isinstance(result, dict) and 'balance' in result else 0  # اصلاح دقیق‌تر
+    if result and isinstance(result, dict):
+        customer['balance'] = result.get('balance', 0)
+    else:
+        customer['balance'] = 0
     customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
     cursor.execute("""
@@ -224,8 +227,12 @@ def customer_details(customer_id):
         WHERE customer_id = %s
     """, (customer_id,))
     totals = cursor.fetchone()
-    customer['total_credit'] = totals['total_credit'] if totals and isinstance(totals, dict) and 'total_credit' in totals else 0
-    customer['total_debit'] = totals['total_debit'] if totals and isinstance(totals, dict) and 'total_debit' in totals else 0
+    if totals and isinstance(totals, dict):
+        customer['total_credit'] = totals.get('total_credit', 0)
+        customer['total_debit'] = totals.get('total_debit', 0)
+    else:
+        customer['total_credit'] = 0
+        customer['total_debit'] = 0
 
     cursor.execute("""
         SELECT id, amount, note, date, photo,
@@ -265,7 +272,10 @@ def index():
             WHERE customer_id = %s
         """, (customer['id'],))
         result = cursor.fetchone()
-        customer['balance'] = result['balance'] if result and result is not None and isinstance(result, dict) and 'balance' in result else 0  # اصلاح دقیق‌تر
+        if result and isinstance(result, dict):
+            customer['balance'] = result.get('balance', 0)
+        else:
+            customer['balance'] = 0
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
         cursor.execute("""
@@ -277,11 +287,11 @@ def index():
         """, (customer['id'],))
         last_transaction = cursor.fetchone()
         if last_transaction and isinstance(last_transaction, dict):
-            customer['last_transaction'] = last_transaction['amount']
+            customer['last_transaction'] = last_transaction.get('amount', 0)
             customer['last_transaction_date'] = jdatetime.datetime.fromgregorian(
-                datetime=last_transaction['date']
+                datetime=last_transaction.get('date', datetime.now())
             ).strftime("%Y/%m/%d")
-            customer['last_transaction_type'] = 'خرید (بدهی)' if last_transaction['amount'] > 0 else 'پرداخت'
+            customer['last_transaction_type'] = 'خرید (بدهی)' if last_transaction.get('amount', 0) > 0 else 'پرداخت'
         else:
             customer['last_transaction'] = 0
             customer['last_transaction_date'] = ''
