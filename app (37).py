@@ -244,14 +244,12 @@ def customer_details(customer_id):
         ORDER BY date DESC
     """, (customer_id,))
     transactions = cursor.fetchall()
-
-    for t in transactions:
-        t['date_shamsi'] = jdatetime.datetime.fromgregorian(
-            datetime=t['date']
-        ).strftime("%Y/%m/%d %H:%M")
+    transactions_list = [dict(t) for t in transactions]  # تبدیل همه به دیکشنری
+    for t in transactions_list:
+        t['date_shamsi'] = jdatetime.datetime.fromgregorian(datetime=t['date']).strftime("%Y/%m/%d %H:%M")
 
     conn.close()
-    return render_template('customer_details.html', customer=customer_dict, transactions=transactions)
+    return render_template('customer_details.html', customer=customer_dict, transactions=transactions_list)
 
 # صفحه اصلی: لیست مشتریان و تراکنش‌ها با قابلیت جستجو
 @app.route('/', methods=['GET', 'POST'])
@@ -267,51 +265,51 @@ def index():
     cursor.execute(query, (f'%{search_query}%', f'%{search_query}%'))
     customers = cursor.fetchall()
 
-    customer_dicts = [dict(c) for c in customers]  # تبدیل همه customers به دیکشنری
-    for customer in customer_dicts:
+    customer_dicts = []
+    for c in customers:
+        c_dict = dict(c)
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) AS balance
             FROM transactions
             WHERE customer_id = %s
-        """, (customer['id'],))
+        """, (c_dict['id'],))
         result = cursor.fetchone()
-        if result and isinstance(result, dict):
-            customer['balance'] = result.get('balance', 0)
-        else:
-            customer['balance'] = 0
-        customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
-
+        c_dict['balance'] = result['balance'] if result and 'balance' in result else 0
+        c_dict['balance_status'] = 'بدهکار' if c_dict['balance'] > 0 else 'طلبکار' if c_dict['balance'] < 0 else 'تسویه'
         cursor.execute("""
             SELECT amount, date
             FROM transactions
             WHERE customer_id = %s
             ORDER BY date DESC
             LIMIT 1
-        """, (customer['id'],))
+        """, (c_dict['id'],))
         last_transaction = cursor.fetchone()
-        if last_transaction and isinstance(last_transaction, dict):
-            customer['last_transaction'] = last_transaction.get('amount', 0)
-            customer['last_transaction_date'] = jdatetime.datetime.fromgregorian(
+        if last_transaction and 'amount' in last_transaction:
+            c_dict['last_transaction'] = last_transaction['amount']
+            c_dict['last_transaction_date'] = jdatetime.datetime.fromgregorian(
                 datetime=last_transaction.get('date', datetime.now())
             ).strftime("%Y/%m/%d")
-            customer['last_transaction_type'] = 'خرید (بدهی)' if last_transaction.get('amount', 0) > 0 else 'پرداخت'
+            c_dict['last_transaction_type'] = 'خرید (بدهی)' if last_transaction['amount'] > 0 else 'پرداخت'
         else:
-            customer['last_transaction'] = 0
-            customer['last_transaction_date'] = ''
-            customer['last_transaction_type'] = ''
+            c_dict['last_transaction'] = 0
+            c_dict['last_transaction_date'] = ''
+            c_dict['last_transaction_type'] = ''
+        customer_dicts.append(c_dict)
 
     cursor.execute("""
         SELECT 
             t.id, t.amount, t.note, t.date, t.photo,
-            c.name, c.phone
+            c.name, c.phone, c.id AS customer_id
         FROM transactions t
         JOIN customers c ON t.customer_id = c.id
         ORDER BY t.date DESC
     """)
     transactions = cursor.fetchall()
-    transaction_dicts = [dict(t) for t in transactions]  # تبدیل همه transactions به دیکشنری
-    for t in transaction_dicts:
-        t['balance'] = next((c['balance'] for c in customer_dicts if c['name'] == t['name']), 0)
+    transaction_dicts = []
+    for t in transactions:
+        t_dict = dict(t)
+        t_dict['balance'] = next((c['balance'] for c in customer_dicts if c['id'] == t_dict['customer_id']), 0)
+        transaction_dicts.append(t_dict)
 
     conn.close()
     return render_template('index.html', customers=customer_dicts, transactions=transaction_dicts, search_query=search_query)
@@ -331,7 +329,7 @@ def reports():
         ) AS balances
     """)
     result = cursor.fetchone()
-    total_debt = result['total_debt'] if result and isinstance(result, dict) and 'total_debt' in result else 0
+    total_debt = result['total_debt'] if result and 'total_debt' in result else 0
 
     cursor.execute("""
         SELECT COUNT(*) AS debtor_count
@@ -343,7 +341,7 @@ def reports():
         ) AS debtors
     """)
     result = cursor.fetchone()
-    debtor_count = result['debtor_count'] if result and isinstance(result, dict) and 'debtor_count' in result else 0
+    debtor_count = result['debtor_count'] if result and 'debtor_count' in result else 0
 
     cursor.execute("""
         SELECT c.id, c.name, c.phone, COALESCE(SUM(t.amount), 0) AS balance
@@ -353,7 +351,8 @@ def reports():
         ORDER BY balance DESC
     """)
     customer_balances = cursor.fetchall()
-    for customer in customer_balances:
+    customer_balances_list = [dict(c) for c in customer_balances]  # تبدیل به دیکشنری
+    for customer in customer_balances_list:
         customer['balance_display'] = abs(customer['balance'])
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
@@ -367,6 +366,7 @@ def reports():
         LIMIT 5
     """)
     top_debtors = cursor.fetchall()
+    top_debtors_list = [dict(t) for t in top_debtors]  # تبدیل به دیکشنری
 
     thirty_days_ago = datetime.now() - timedelta(days=30)
     cursor.execute("""
@@ -377,7 +377,8 @@ def reports():
         ORDER BY t.date
     """, (thirty_days_ago,))
     overdue_customers = cursor.fetchall()
-    for customer in overdue_customers:
+    overdue_customers_list = [dict(o) for o in overdue_customers]  # تبدیل به دیکشنری
+    for customer in overdue_customers_list:
         customer['date_shamsi'] = jdatetime.datetime.fromgregorian(
             datetime=customer['date']
         ).strftime("%Y/%m/%d")
@@ -385,10 +386,10 @@ def reports():
     conn.close()
     return render_template('reports.html', 
                          total_debt=total_debt,
-                         top_debtors=top_debtors,
-                         overdue_customers=overdue_customers,
+                         top_debtors=top_debtors_list,
+                         overdue_customers=overdue_customers_list,
                          debtor_count=debtor_count,
-                         customer_balances=customer_balances)
+                         customer_balances=customer_balances_list)
 
 # افزودن تراکنش
 @app.route('/add_transaction', methods=['GET', 'POST'])
@@ -501,7 +502,7 @@ def add_customer():
 @app.route('/edit_customer/<int:id>', methods=['GET', 'POST'])
 def edit_customer(id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # استفاده از DictCursor
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     if request.method == 'POST':
         name = request.form['name']
         phone = request.form['phone']
@@ -515,9 +516,9 @@ def edit_customer(id):
         flash('مشتری با موفقیت ویرایش شد.', 'success')
         return redirect('/')
     cursor.execute("SELECT * FROM customers WHERE id = %s", (id,))
-    customer = cursor.fetchone()  # حالا باید دیکشنری باشه
+    customer = cursor.fetchone()
     if customer:
-        customer = dict(customer)  # تبدیل به دیکشنری برای اطمینان
+        customer = dict(customer)  # تبدیل به دیکشنری
     else:
         conn.close()
         flash('مشتری یافت نشد.', 'error')
@@ -544,4 +545,4 @@ def delete_customer(id):
 
 # اجرای برنامه
 if __name__ == '__main__':
-    app.run(debug=True, port=10000)  # مشخص کردن پورت برای Render
+    app.run(debug=True, port=10000)
