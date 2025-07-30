@@ -206,13 +206,16 @@ def customer_details(customer_id):
         conn.close()
         flash('مشتری یافت نشد.', 'error')
         return redirect(url_for('index'))
+
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0) AS balance
         FROM transactions
         WHERE customer_id = %s
     """, (customer_id,))
-    customer['balance'] = cursor.fetchone()['balance']
+    result = cursor.fetchone()
+    customer['balance'] = result['balance'] if result else 0  # اصلاح اینجا
     customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
+
     cursor.execute("""
         SELECT 
             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS total_credit,
@@ -223,6 +226,7 @@ def customer_details(customer_id):
     totals = cursor.fetchone()
     customer['total_credit'] = totals['total_credit']
     customer['total_debit'] = totals['total_debit']
+
     cursor.execute("""
         SELECT id, amount, note, date, photo,
                CASE WHEN amount > 0 THEN 'خرید' ELSE 'پرداخت' END AS transaction_type
@@ -231,10 +235,12 @@ def customer_details(customer_id):
         ORDER BY date DESC
     """, (customer_id,))
     transactions = cursor.fetchall()
+
     for t in transactions:
         t['date_shamsi'] = jdatetime.datetime.fromgregorian(
             datetime=t['date']
         ).strftime("%Y/%m/%d %H:%M")
+
     conn.close()
     return render_template('customer_details.html', customer=customer, transactions=transactions)
 
@@ -251,6 +257,7 @@ def index():
     """
     cursor.execute(query, (f'%{search_query}%', f'%{search_query}%'))
     customers = cursor.fetchall()
+
     for customer in customers:
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) AS balance
@@ -258,8 +265,9 @@ def index():
             WHERE customer_id = %s
         """, (customer['id'],))
         result = cursor.fetchone()
-        customer['balance'] = result['balance']
+        customer['balance'] = result['balance'] if result else 0  # اصلاح اینجا
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
+
         cursor.execute("""
             SELECT amount, date
             FROM transactions
@@ -278,6 +286,7 @@ def index():
             customer['last_transaction'] = 0
             customer['last_transaction_date'] = ''
             customer['last_transaction_type'] = ''
+
     cursor.execute("""
         SELECT 
             t.id, t.amount, t.note, t.date, t.photo,
@@ -287,8 +296,10 @@ def index():
         ORDER BY t.date DESC
     """)
     transactions = cursor.fetchall()
+
     for t in transactions:
         t['balance'] = next((c['balance'] for c in customers if c['name'] == t['name']), 0)
+
     conn.close()
     return render_template('index.html', customers=customers, transactions=transactions, search_query=search_query)
 
@@ -446,15 +457,24 @@ def delete_transaction(id):
 @app.route('/add_customer', methods=['GET', 'POST'])
 def add_customer():
     if request.method == 'POST':
-        name = request.form['name']
-        phone = request.form['phone']
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO customers (name, phone) VALUES (%s, %s)", (name, phone))
-        conn.commit()
-        conn.close()
-        flash('مشتری با موفقیت اضافه شد.', 'success')
-        return redirect('/')
+        name = request.form.get('name', '').strip()
+        phone = request.form.get('phone', '').strip()
+        if not name or not phone:
+            flash('نام و شماره تلفن الزامی است.', 'error')
+            return render_template('add_customer.html')
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO customers (name, phone) VALUES (%s, %s)", (name, phone))
+            conn.commit()
+            conn.close()
+            flash('مشتری با موفقیت اضافه شد.', 'success')
+            return redirect('/')
+        except Exception as e:
+            conn.rollback()
+            conn.close()
+            flash(f'خطا در افزودن مشتری: {str(e)}', 'error')
+            return render_template('add_customer.html')
     return render_template('add_customer.html')
 
 # ویرایش مشتری
