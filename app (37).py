@@ -214,10 +214,12 @@ def customer_details(customer_id):
     """, (customer_id,))
     result = cursor.fetchone()
     if result and isinstance(result, dict):
-        customer['balance'] = result.get('balance', 0)
+        customer_dict = dict(customer)  # تبدیل DictRow به دیکشنری
+        customer_dict['balance'] = result.get('balance', 0)
     else:
-        customer['balance'] = 0
-    customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
+        customer_dict = dict(customer)
+        customer_dict['balance'] = 0
+    customer_dict['balance_status'] = 'بدهکار' if customer_dict['balance'] > 0 else 'طلبکار' if customer_dict['balance'] < 0 else 'تسویه'
 
     cursor.execute("""
         SELECT 
@@ -228,11 +230,11 @@ def customer_details(customer_id):
     """, (customer_id,))
     totals = cursor.fetchone()
     if totals and isinstance(totals, dict):
-        customer['total_credit'] = totals.get('total_credit', 0)
-        customer['total_debit'] = totals.get('total_debit', 0)
+        customer_dict['total_credit'] = totals.get('total_credit', 0)
+        customer_dict['total_debit'] = totals.get('total_debit', 0)
     else:
-        customer['total_credit'] = 0
-        customer['total_debit'] = 0
+        customer_dict['total_credit'] = 0
+        customer_dict['total_debit'] = 0
 
     cursor.execute("""
         SELECT id, amount, note, date, photo,
@@ -249,7 +251,7 @@ def customer_details(customer_id):
         ).strftime("%Y/%m/%d %H:%M")
 
     conn.close()
-    return render_template('customer_details.html', customer=customer, transactions=transactions)
+    return render_template('customer_details.html', customer=customer_dict, transactions=transactions)
 
 # صفحه اصلی: لیست مشتریان و تراکنش‌ها با قابلیت جستجو
 @app.route('/', methods=['GET', 'POST'])
@@ -266,17 +268,18 @@ def index():
     customers = cursor.fetchall()
 
     for customer in customers:
+        customer_dict = dict(customer)  # تبدیل DictRow به دیکشنری
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) AS balance
             FROM transactions
             WHERE customer_id = %s
-        """, (customer['id'],))
+        """, (customer_dict['id'],))
         result = cursor.fetchone()
         if result and isinstance(result, dict):
-            customer['balance'] = result.get('balance', 0)
+            customer_dict['balance'] = result.get('balance', 0)
         else:
-            customer['balance'] = 0
-        customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
+            customer_dict['balance'] = 0
+        customer_dict['balance_status'] = 'بدهکار' if customer_dict['balance'] > 0 else 'طلبکار' if customer_dict['balance'] < 0 else 'تسویه'
 
         cursor.execute("""
             SELECT amount, date
@@ -284,18 +287,18 @@ def index():
             WHERE customer_id = %s
             ORDER BY date DESC
             LIMIT 1
-        """, (customer['id'],))
+        """, (customer_dict['id'],))
         last_transaction = cursor.fetchone()
         if last_transaction and isinstance(last_transaction, dict):
-            customer['last_transaction'] = last_transaction.get('amount', 0)
-            customer['last_transaction_date'] = jdatetime.datetime.fromgregorian(
+            customer_dict['last_transaction'] = last_transaction.get('amount', 0)
+            customer_dict['last_transaction_date'] = jdatetime.datetime.fromgregorian(
                 datetime=last_transaction.get('date', datetime.now())
             ).strftime("%Y/%m/%d")
-            customer['last_transaction_type'] = 'خرید (بدهی)' if last_transaction.get('amount', 0) > 0 else 'پرداخت'
+            customer_dict['last_transaction_type'] = 'خرید (بدهی)' if last_transaction.get('amount', 0) > 0 else 'پرداخت'
         else:
-            customer['last_transaction'] = 0
-            customer['last_transaction_date'] = ''
-            customer['last_transaction_type'] = ''
+            customer_dict['last_transaction'] = 0
+            customer_dict['last_transaction_date'] = ''
+            customer_dict['last_transaction_type'] = ''
 
     cursor.execute("""
         SELECT 
