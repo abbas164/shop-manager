@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
 import psycopg2
+from psycopg2 import extras  # اضافه کردن برای DictCursor
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 import os
@@ -102,7 +103,7 @@ def send_sms(customer_phone, message):
 @app.route('/send_sms/<int:customer_id>', methods=['POST'])
 def send_sms_route(customer_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
     cursor.execute("""
         SELECT c.name, c.phone, t.last_transaction_date, t.last_transaction, t.balance 
         FROM customers c 
@@ -140,7 +141,7 @@ def send_sms_route(customer_id):
 @app.route('/send_whatsapp/<int:customer_id>', methods=['GET'])
 def send_whatsapp(customer_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
     cursor.execute("""
         SELECT c.name, c.phone, t.last_transaction_date, t.last_transaction, t.balance 
         FROM customers c 
@@ -185,7 +186,7 @@ def send_whatsapp(customer_id):
 @app.route('/customer/<int:customer_id>')
 def customer_details(customer_id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
 
     cursor.execute("SELECT id, name, phone FROM customers WHERE id = %s", (customer_id,))
     customer = cursor.fetchone()
@@ -234,7 +235,7 @@ def customer_details(customer_id):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
 
     search_query = request.form.get('search', '') if request.method == 'POST' else ''
     query = """
@@ -294,7 +295,7 @@ def index():
 @app.route('/reports')
 def reports():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
 
     cursor.execute("""
         SELECT COALESCE(SUM(balance), 0) AS total_debt
@@ -367,7 +368,7 @@ def reports():
 @app.route('/add_transaction', methods=['GET', 'POST'])
 def add_transaction():
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
 
     if request.method == 'POST':
         customer_id = request.form['customer_id']
@@ -404,7 +405,7 @@ def add_transaction():
 @app.route('/edit_transaction/<int:id>', methods=['GET', 'POST'])
 def edit_transaction(id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
 
     if request.method == 'POST':
         customer_id = request.form['customer_id']
@@ -443,7 +444,7 @@ def edit_transaction(id):
 @app.route('/delete_transaction/<int:id>', methods=['POST'])
 def delete_transaction(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
     cursor.execute("SELECT photo FROM transactions WHERE id = %s", (id,))
     photo = cursor.fetchone()[0]
     if photo:
@@ -464,7 +465,7 @@ def add_customer():
         phone = request.form['phone']
 
         conn = get_db_connection()
-        cursor = conn.cursor()
+        cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
         cursor.execute("INSERT INTO customers (name, phone) VALUES (%s, %s)", (name, phone))
         conn.commit()
         conn.close()
@@ -476,7 +477,7 @@ def add_customer():
 @app.route('/edit_customer/<int:id>', methods=['GET', 'POST'])
 def edit_customer(id):
     conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
 
     if request.method == 'POST':
         name = request.form['name']
@@ -501,7 +502,7 @@ def edit_customer(id):
 @app.route('/delete_customer/<int:id>', methods=['POST'])
 def delete_customer(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
     cursor.execute("SELECT COUNT(*) AS count FROM transactions WHERE customer_id = %s", (id,))
     count = cursor.fetchone()[0]
     if count > 0:
