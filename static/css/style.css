@@ -1,4 +1,14 @@
-body { font-family: Arial, sans-serif; }
-.alert { padding: 10px; margin: 10px 0; }
-.alert-success { background-color: #d4edda; color: #155724; }
-.alert-error { background-color: #f8d7da; color: #721c24; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+    font-family: 'Iransans';
+    src: url('../fonts/IRANSansWeb.ttf') format('truetype');
+    /* ??? .woff2 ????? ??? ?? ?? ?? ????? ??: */
+    /* src: url('../fonts/IRANSansWeb.woff2') format('woff2'); */
+}
+
+body {
+    font-family: 'Iransans', sans-serif;
+}
