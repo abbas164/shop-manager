@@ -265,7 +265,7 @@ def index():
             WHERE customer_id = %s
         """, (customer['id'],))
         result = cursor.fetchone()
-        customer['balance'] = result['balance'] if result and isinstance(result, dict) and 'balance' in result else 0  # اصلاح دقیق‌تر
+        customer['balance'] = result['balance'] if result and result is not None and isinstance(result, dict) and 'balance' in result else 0  # اصلاح دقیق‌تر
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
         cursor.execute("""
@@ -276,7 +276,7 @@ def index():
             LIMIT 1
         """, (customer['id'],))
         last_transaction = cursor.fetchone()
-        if last_transaction:
+        if last_transaction and isinstance(last_transaction, dict):
             customer['last_transaction'] = last_transaction['amount']
             customer['last_transaction_date'] = jdatetime.datetime.fromgregorian(
                 datetime=last_transaction['date']
