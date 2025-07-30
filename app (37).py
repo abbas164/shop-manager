@@ -213,7 +213,7 @@ def customer_details(customer_id):
         WHERE customer_id = %s
     """, (customer_id,))
     result = cursor.fetchone()
-    customer['balance'] = result['balance'] if result and 'balance' in result else 0  # اصلاح دقیق‌تر
+    customer['balance'] = result['balance'] if result and isinstance(result, dict) and 'balance' in result else 0  # اصلاح دقیق‌تر
     customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
     cursor.execute("""
@@ -224,8 +224,8 @@ def customer_details(customer_id):
         WHERE customer_id = %s
     """, (customer_id,))
     totals = cursor.fetchone()
-    customer['total_credit'] = totals['total_credit'] if totals and 'total_credit' in totals else 0
-    customer['total_debit'] = totals['total_debit'] if totals and 'total_debit' in totals else 0
+    customer['total_credit'] = totals['total_credit'] if totals and isinstance(totals, dict) and 'total_credit' in totals else 0
+    customer['total_debit'] = totals['total_debit'] if totals and isinstance(totals, dict) and 'total_debit' in totals else 0
 
     cursor.execute("""
         SELECT id, amount, note, date, photo,
@@ -265,7 +265,7 @@ def index():
             WHERE customer_id = %s
         """, (customer['id'],))
         result = cursor.fetchone()
-        customer['balance'] = result['balance'] if result and 'balance' in result else 0  # اصلاح دقیق‌تر
+        customer['balance'] = result['balance'] if result and isinstance(result, dict) and 'balance' in result else 0  # اصلاح دقیق‌تر
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
         cursor.execute("""
@@ -318,7 +318,7 @@ def reports():
         ) AS balances
     """)
     result = cursor.fetchone()
-    total_debt = result['total_debt'] if result and 'total_debt' in result else 0
+    total_debt = result['total_debt'] if result and isinstance(result, dict) and 'total_debt' in result else 0
 
     cursor.execute("""
         SELECT COUNT(*) AS debtor_count
@@ -330,7 +330,7 @@ def reports():
         ) AS debtors
     """)
     result = cursor.fetchone()
-    debtor_count = result['debtor_count'] if result and 'debtor_count' in result else 0
+    debtor_count = result['debtor_count'] if result and isinstance(result, dict) and 'debtor_count' in result else 0
 
     cursor.execute("""
         SELECT c.id, c.name, c.phone, COALESCE(SUM(t.amount), 0) AS balance
