@@ -127,7 +127,7 @@ def send_sms_route(customer_id):
         LEFT JOIN (
             SELECT customer_id, 
                    MAX(date) as last_transaction_date, 
-                   amount as last_transaction, 
+                   MAX(amount) as last_transaction, 
                    SUM(amount) as balance 
             FROM transactions 
             GROUP BY customer_id
@@ -164,7 +164,7 @@ def send_whatsapp(customer_id):
         LEFT JOIN (
             SELECT customer_id, 
                    MAX(date) as last_transaction_date, 
-                   amount as last_transaction, 
+                   MAX(amount) as last_transaction, 
                    SUM(amount) as balance 
             FROM transactions 
             GROUP BY customer_id
