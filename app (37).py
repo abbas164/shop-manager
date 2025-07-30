@@ -267,19 +267,19 @@ def index():
     cursor.execute(query, (f'%{search_query}%', f'%{search_query}%'))
     customers = cursor.fetchall()
 
-    for customer in customers:
-        customer_dict = dict(customer)  # تبدیل DictRow به دیکشنری
+    customer_dicts = [dict(c) for c in customers]  # تبدیل همه customers به دیکشنری
+    for customer in customer_dicts:
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) AS balance
             FROM transactions
             WHERE customer_id = %s
-        """, (customer_dict['id'],))
+        """, (customer['id'],))
         result = cursor.fetchone()
         if result and isinstance(result, dict):
-            customer_dict['balance'] = result.get('balance', 0)
+            customer['balance'] = result.get('balance', 0)
         else:
-            customer_dict['balance'] = 0
-        customer_dict['balance_status'] = 'بدهکار' if customer_dict['balance'] > 0 else 'طلبکار' if customer_dict['balance'] < 0 else 'تسویه'
+            customer['balance'] = 0
+        customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
 
         cursor.execute("""
             SELECT amount, date
@@ -287,18 +287,18 @@ def index():
             WHERE customer_id = %s
             ORDER BY date DESC
             LIMIT 1
-        """, (customer_dict['id'],))
+        """, (customer['id'],))
         last_transaction = cursor.fetchone()
         if last_transaction and isinstance(last_transaction, dict):
-            customer_dict['last_transaction'] = last_transaction.get('amount', 0)
-            customer_dict['last_transaction_date'] = jdatetime.datetime.fromgregorian(
+            customer['last_transaction'] = last_transaction.get('amount', 0)
+            customer['last_transaction_date'] = jdatetime.datetime.fromgregorian(
                 datetime=last_transaction.get('date', datetime.now())
             ).strftime("%Y/%m/%d")
-            customer_dict['last_transaction_type'] = 'خرید (بدهی)' if last_transaction.get('amount', 0) > 0 else 'پرداخت'
+            customer['last_transaction_type'] = 'خرید (بدهی)' if last_transaction.get('amount', 0) > 0 else 'پرداخت'
         else:
-            customer_dict['last_transaction'] = 0
-            customer_dict['last_transaction_date'] = ''
-            customer_dict['last_transaction_type'] = ''
+            customer['last_transaction'] = 0
+            customer['last_transaction_date'] = ''
+            customer['last_transaction_type'] = ''
 
     cursor.execute("""
         SELECT 
@@ -309,12 +309,12 @@ def index():
         ORDER BY t.date DESC
     """)
     transactions = cursor.fetchall()
-
-    for t in transactions:
-        t['balance'] = next((c['balance'] for c in customers if c['name'] == t['name']), 0)
+    transaction_dicts = [dict(t) for t in transactions]  # تبدیل همه transactions به دیکشنری
+    for t in transaction_dicts:
+        t['balance'] = next((c['balance'] for c in customer_dicts if c['name'] == t['name']), 0)
 
     conn.close()
-    return render_template('index.html', customers=customers, transactions=transactions, search_query=search_query)
+    return render_template('index.html', customers=customer_dicts, transactions=transaction_dicts, search_query=search_query)
 
 # گزارش‌گیری جامع
 @app.route('/reports')
@@ -501,7 +501,7 @@ def add_customer():
 @app.route('/edit_customer/<int:id>', methods=['GET', 'POST'])
 def edit_customer(id):
     conn = get_db_connection()
-    cursor = conn.cursor()
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # استفاده از DictCursor
     if request.method == 'POST':
         name = request.form['name']
         phone = request.form['phone']
@@ -515,7 +515,13 @@ def edit_customer(id):
         flash('مشتری با موفقیت ویرایش شد.', 'success')
         return redirect('/')
     cursor.execute("SELECT * FROM customers WHERE id = %s", (id,))
-    customer = cursor.fetchone()
+    customer = cursor.fetchone()  # حالا باید دیکشنری باشه
+    if customer:
+        customer = dict(customer)  # تبدیل به دیکشنری برای اطمینان
+    else:
+        conn.close()
+        flash('مشتری یافت نشد.', 'error')
+        return redirect('/')
     conn.close()
     return render_template('edit_customer.html', customer=customer)
 
@@ -538,4 +544,4 @@ def delete_customer(id):
 
 # اجرای برنامه
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=10000)  # مشخص کردن پورت برای Render
