@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, flash, url_for
 import psycopg2
-from psycopg2 import extras  # اضافه کردن برای DictCursor
+from psycopg2 import extras  # برای DictCursor
 from datetime import datetime, timedelta
 from werkzeug.utils import secure_filename
 import os
@@ -27,25 +27,53 @@ def allowed_file(filename):
 # اتصال به دیتابیس
 def get_db_connection():
     return psycopg2.connect(
-        host='dpg-d24kfnre5dus73dcpva0-a',  # از داشبورد Render کپی کن
-        database='shop_u2sf',                     # از داشبورد Render کپی کن
-        user='shop_u2sf_user',                       # از داشبورد Render کپی کن
-        password='xnTOqMelH98OzbHfTbS9Zf9KHTpA4LLS',               # از داشبورد Render کپی کن
+        host='dpg-d24kfnre5dus73dcpva0-a',  # از External کپی کن
+        database='shop_u2sf',              # از External کپی کن
+        user='shop_u2sf_user',             # از External کپی کن
+        password='xnTOqMelH98OzbHfTbS9Zf9KHTpA4LLS',  # از External کپی کن
         port='5432'
     )
 
+# تابع ساخت جدول‌ها (اگه وجود نداشته باشن)
+def create_tables():
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS customers (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                phone VARCHAR(20) DEFAULT NULL
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS transactions (
+                id SERIAL PRIMARY KEY,
+                customer_id INTEGER REFERENCES customers(id) ON DELETE CASCADE,
+                amount DECIMAL(10,2) DEFAULT NULL,
+                note TEXT,
+                date TIMESTAMP DEFAULT NULL,
+                photo VARCHAR(255) DEFAULT NULL
+            )
+        """)
+        conn.commit()
+        print("Tables created successfully")
+    except psycopg2.Error as e:
+        print(f"Error creating tables: {e}")
+        conn.rollback()
+    finally:
+        conn.close()
+
+# فراخوانی تابع ساخت جدول موقع اجرا
+create_tables()
+
 # تابع گرفتن توکن امنیتی از sms.ir
 def get_sms_ir_token():
-    api_key = "Q6xLf9lTTmY4TSi2WNvWLmuTs0fwcyaTOcWbWds2MqRcME3a"  # API Key تو
-    secret_key = "your_secret_key"  # جایگزین با SecretKey از پنل sms.ir
+    api_key = "Q6xLf9lTTmY4TSi2WNvWLmuTs0fwcyaTOcWbWds2MqRcME3a"
+    secret_key = "your_secret_key"
     url = "https://restfulsms.com/api/Token"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "UserApiKey": api_key,
-        "SecretKey": secret_key
-    }
+    headers = {"Content-Type": "application/json"}
+    payload = {"UserApiKey": api_key, "SecretKey": secret_key}
     try:
         response = requests.post(url, json=payload, headers=headers, timeout=10)
         print(f"Token Response Status: {response.status_code}, Text: {response.text}")
@@ -63,29 +91,18 @@ def get_sms_ir_token():
 
 # تابع ارسال پیامک با API sms.ir
 def send_sms(customer_phone, message):
-    sender_number = "30007487127646"  # شماره فرستنده تو
+    sender_number = "30007487127646"
     url = "https://restfulsms.com/api/MessageSend"
-    
-    # گرفتن توکن امنیتی
     success, token_result = get_sms_ir_token()
     if not success:
         return False, token_result
-    
-    headers = {
-        "x-sms-ir-secure-token": token_result,
-        "Accept": "application/json"
-    }
+    headers = {"x-sms-ir-secure-token": token_result, "Accept": "application/json"}
     cleaned_phone = customer_phone.replace('+', '').replace(' ', '')
     if cleaned_phone.startswith('0'):
         cleaned_phone = '98' + cleaned_phone[1:]
     if not cleaned_phone.isdigit() or len(cleaned_phone) < 10:
         return False, "شماره تلفن نامعتبر است."
-    
-    payload = {
-        "MobileNumbers": [cleaned_phone],
-        "Messages": [message],
-        "SenderNumber": sender_number,
-    }
+    payload = {"MobileNumbers": [cleaned_phone], "Messages": [message], "SenderNumber": sender_number}
     try:
         print(f"Sending SMS to: {cleaned_phone}, Message: {message}")
         response = requests.post(url, json=payload, headers=headers, timeout=10)
@@ -103,7 +120,7 @@ def send_sms(customer_phone, message):
 @app.route('/send_sms/<int:customer_id>', methods=['POST'])
 def send_sms_route(customer_id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     cursor.execute("""
         SELECT c.name, c.phone, t.last_transaction_date, t.last_transaction, t.balance 
         FROM customers c 
@@ -119,7 +136,6 @@ def send_sms_route(customer_id):
     """, (customer_id,))
     customer = cursor.fetchone()
     conn.close()
-
     if customer and customer['phone'] and customer['last_transaction_date']:
         last_transaction_date = jdatetime.datetime.fromgregorian(
             datetime=customer['last_transaction_date']
@@ -141,7 +157,7 @@ def send_sms_route(customer_id):
 @app.route('/send_whatsapp/<int:customer_id>', methods=['GET'])
 def send_whatsapp(customer_id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     cursor.execute("""
         SELECT c.name, c.phone, t.last_transaction_date, t.last_transaction, t.balance 
         FROM customers c 
@@ -157,17 +173,14 @@ def send_whatsapp(customer_id):
     """, (customer_id,))
     customer = cursor.fetchone()
     conn.close()
-
     if customer and customer['phone'] and customer['last_transaction_date']:
         phone = customer['phone'].replace('+', '').replace(' ', '')
         if not phone.isdigit() or len(phone) < 10:
             flash('شماره تلفن نامعتبر است.', 'error')
             return redirect(url_for('index'))
-
         last_transaction_date = jdatetime.datetime.fromgregorian(
             datetime=customer['last_transaction_date']
         ).strftime("%Y/%m/%d")
-
         message = (
             f"سلام {customer['name']} عزیز،\n"
             f"فاکتور خرید شما در تاریخ {last_transaction_date}: {abs(customer['last_transaction']):,} تومان\n"
@@ -186,15 +199,13 @@ def send_whatsapp(customer_id):
 @app.route('/customer/<int:customer_id>')
 def customer_details(customer_id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
-
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     cursor.execute("SELECT id, name, phone FROM customers WHERE id = %s", (customer_id,))
     customer = cursor.fetchone()
     if not customer:
         conn.close()
         flash('مشتری یافت نشد.', 'error')
         return redirect(url_for('index'))
-
     cursor.execute("""
         SELECT COALESCE(SUM(amount), 0) AS balance
         FROM transactions
@@ -202,7 +213,6 @@ def customer_details(customer_id):
     """, (customer_id,))
     customer['balance'] = cursor.fetchone()['balance']
     customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
-
     cursor.execute("""
         SELECT 
             COALESCE(SUM(CASE WHEN amount > 0 THEN amount ELSE 0 END), 0) AS total_credit,
@@ -213,7 +223,6 @@ def customer_details(customer_id):
     totals = cursor.fetchone()
     customer['total_credit'] = totals['total_credit']
     customer['total_debit'] = totals['total_debit']
-
     cursor.execute("""
         SELECT id, amount, note, date, photo,
                CASE WHEN amount > 0 THEN 'خرید' ELSE 'پرداخت' END AS transaction_type
@@ -222,12 +231,10 @@ def customer_details(customer_id):
         ORDER BY date DESC
     """, (customer_id,))
     transactions = cursor.fetchall()
-
     for t in transactions:
         t['date_shamsi'] = jdatetime.datetime.fromgregorian(
             datetime=t['date']
         ).strftime("%Y/%m/%d %H:%M")
-
     conn.close()
     return render_template('customer_details.html', customer=customer, transactions=transactions)
 
@@ -235,8 +242,7 @@ def customer_details(customer_id):
 @app.route('/', methods=['GET', 'POST'])
 def index():
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
-
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     search_query = request.form.get('search', '') if request.method == 'POST' else ''
     query = """
         SELECT id, name, phone FROM customers
@@ -245,7 +251,6 @@ def index():
     """
     cursor.execute(query, (f'%{search_query}%', f'%{search_query}%'))
     customers = cursor.fetchall()
-
     for customer in customers:
         cursor.execute("""
             SELECT COALESCE(SUM(amount), 0) AS balance
@@ -255,7 +260,6 @@ def index():
         result = cursor.fetchone()
         customer['balance'] = result['balance']
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
-
         cursor.execute("""
             SELECT amount, date
             FROM transactions
@@ -274,7 +278,6 @@ def index():
             customer['last_transaction'] = 0
             customer['last_transaction_date'] = ''
             customer['last_transaction_type'] = ''
-
     cursor.execute("""
         SELECT 
             t.id, t.amount, t.note, t.date, t.photo,
@@ -284,10 +287,8 @@ def index():
         ORDER BY t.date DESC
     """)
     transactions = cursor.fetchall()
-
     for t in transactions:
         t['balance'] = next((c['balance'] for c in customers if c['name'] == t['name']), 0)
-
     conn.close()
     return render_template('index.html', customers=customers, transactions=transactions, search_query=search_query)
 
@@ -295,8 +296,7 @@ def index():
 @app.route('/reports')
 def reports():
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
-
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     cursor.execute("""
         SELECT COALESCE(SUM(balance), 0) AS total_debt
         FROM (
@@ -307,7 +307,6 @@ def reports():
         ) AS balances
     """)
     total_debt = cursor.fetchone()['total_debt']
-
     cursor.execute("""
         SELECT COUNT(*) AS debtor_count
         FROM (
@@ -318,7 +317,6 @@ def reports():
         ) AS debtors
     """)
     debtor_count = cursor.fetchone()['debtor_count']
-
     cursor.execute("""
         SELECT c.id, c.name, c.phone, COALESCE(SUM(t.amount), 0) AS balance
         FROM customers c
@@ -330,7 +328,6 @@ def reports():
     for customer in customer_balances:
         customer['balance_display'] = abs(customer['balance'])
         customer['balance_status'] = 'بدهکار' if customer['balance'] > 0 else 'طلبکار' if customer['balance'] < 0 else 'تسویه'
-
     cursor.execute("""
         SELECT c.id, c.name, c.phone, COALESCE(SUM(t.amount), 0) AS balance
         FROM customers c
@@ -341,7 +338,6 @@ def reports():
         LIMIT 5
     """)
     top_debtors = cursor.fetchall()
-
     thirty_days_ago = datetime.now() - timedelta(days=30)
     cursor.execute("""
         SELECT c.id, c.name, c.phone, t.amount, t.date
@@ -355,7 +351,6 @@ def reports():
         customer['date_shamsi'] = jdatetime.datetime.fromgregorian(
             datetime=customer['date']
         ).strftime("%Y/%m/%d")
-
     conn.close()
     return render_template('reports.html', 
                          total_debt=total_debt,
@@ -368,8 +363,7 @@ def reports():
 @app.route('/add_transaction', methods=['GET', 'POST'])
 def add_transaction():
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
-
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     if request.method == 'POST':
         customer_id = request.form['customer_id']
         amount = float(request.form['amount'])
@@ -377,16 +371,13 @@ def add_transaction():
         note = request.form['note']
         date = datetime.now()
         photo_filename = None
-
         if 'photo' in request.files:
             file = request.files['photo']
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 photo_filename = filename
-
         final_amount = amount if transaction_type == 'credit' else -amount
-
         cursor.execute("""
             INSERT INTO transactions (customer_id, amount, note, date, photo)
             VALUES (%s, %s, %s, %s, %s)
@@ -395,7 +386,6 @@ def add_transaction():
         conn.close()
         flash('تراکنش با موفقیت ثبت شد.', 'success')
         return redirect('/')
-
     cursor.execute("SELECT id, name, phone FROM customers ORDER BY name")
     customers = cursor.fetchall()
     conn.close()
@@ -405,24 +395,20 @@ def add_transaction():
 @app.route('/edit_transaction/<int:id>', methods=['GET', 'POST'])
 def edit_transaction(id):
     conn = get_db_connection()
-    cursor = conn.cursor(cursor_factory=extras.DictCursor)  # تغییر به DictCursor
-
+    cursor = conn.cursor(cursor_factory=extras.DictCursor)
     if request.method == 'POST':
         customer_id = request.form['customer_id']
         amount = float(request.form['amount'])
         transaction_type = request.form['transaction_type']
         note = request.form['note']
         photo_filename = request.form.get('existing_photo')
-
         if 'photo' in request.files:
             file = request.files['photo']
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 photo_filename = filename
-
         final_amount = amount if transaction_type == 'credit' else -amount
-
         cursor.execute("""
             UPDATE transactions
             SET customer_id = %s, amount = %s, note = %s, photo = %s
@@ -432,7 +418,6 @@ def edit_transaction(id):
         conn.close()
         flash('تراکنش با موفقیت ویرایش شد.', 'success')
         return redirect('/')
-
     cursor.execute("SELECT * FROM transactions WHERE id = %s", (id,))
     transaction = cursor.fetchone()
     cursor.execute("SELECT id, name FROM customers ORDER BY name")
@@ -444,7 +429,7 @@ def edit_transaction(id):
 @app.route('/delete_transaction/<int:id>', methods=['POST'])
 def delete_transaction(id):
     conn = get_db_connection()
-    cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
+    cursor = conn.cursor()
     cursor.execute("SELECT photo FROM transactions WHERE id = %s", (id,))
     photo = cursor.fetchone()[0]
     if photo:
@@ -463,9 +448,8 @@ def add_customer():
     if request.method == 'POST':
         name = request.form['name']
         phone = request.form['phone']
-
         conn = get_db_connection()
-        cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
+        cursor = conn.cursor()
         cursor.execute("INSERT INTO customers (name, phone) VALUES (%s, %s)", (name, phone))
         conn.commit()
         conn.close()
@@ -477,12 +461,10 @@ def add_customer():
 @app.route('/edit_customer/<int:id>', methods=['GET', 'POST'])
 def edit_customer(id):
     conn = get_db_connection()
-    cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
-
+    cursor = conn.cursor()
     if request.method == 'POST':
         name = request.form['name']
         phone = request.form['phone']
-
         cursor.execute("""
             UPDATE customers
             SET name = %s, phone = %s
@@ -492,7 +474,6 @@ def edit_customer(id):
         conn.close()
         flash('مشتری با موفقیت ویرایش شد.', 'success')
         return redirect('/')
-
     cursor.execute("SELECT * FROM customers WHERE id = %s", (id,))
     customer = cursor.fetchone()
     conn.close()
@@ -502,14 +483,13 @@ def edit_customer(id):
 @app.route('/delete_customer/<int:id>', methods=['POST'])
 def delete_customer(id):
     conn = get_db_connection()
-    cursor = conn.cursor()  # اینجا نیازی به DictCursor نیست
+    cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) AS count FROM transactions WHERE customer_id = %s", (id,))
     count = cursor.fetchone()[0]
     if count > 0:
         conn.close()
         flash('نمی‌توانید مشتری را حذف کنید زیرا تراکنش‌هایی مرتبط با او وجود دارد.', 'error')
         return redirect('/')
-    
     cursor.execute("DELETE FROM customers WHERE id = %s", (id,))
     conn.commit()
     conn.close()
