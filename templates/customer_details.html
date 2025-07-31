@@ -48,61 +48,111 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen">
-    <nav class="navbar">
-        <div class="container mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <nav class="nav-sidebar">
+        <div class="flex items-center space-x-3 mb-6 p-4 border-b border-indigo-800">
+            <svg class="w-10 h-10 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823.922-4m-1.922 8.364c.025-.167.061-.333.098-.5M3 16.5V8a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-7.5" />
+            </svg>
+            <h1 class="text-2xl font-bold text-yellow-300">فروشگاه آزادی</h1>
+        </div>
+        <div class="space-y-2">
+            <a href="{{ url_for('index') }}" class="nav-item">
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <h1 class="text-2xl font-bold">فروشگاه لوازم ساختمانی آزادی</h1>
-            </div>
-            <div class="hidden md:flex space-x-4">
-                <a href="{{ url_for('index') }}" class="navbar-item">صفحه اصلی</a>
-                <a href="{{ url_for('add_customer') }}" class="navbar-item">افزودن مشتری</a>
-                <a href="{{ url_for('add_transaction') }}" class="navbar-item">افزودن تراکنش</a>
-                <a href="{{ url_for('reports') }}" class="navbar-item">گزارش‌ها</a>
-            </div>
-            <button class="md:hidden text-white focus:outline-none" onclick="toggleMenu()">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                <span>صفحه اصلی</span>
+            </a>
+            <a href="{{ url_for('add_customer') }}" class="nav-item">
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden navbar-mobile">
-            <a href="{{ url_for('index') }}" class="block navbar-item">صفحه اصلی</a>
-            <a href="{{ url_for('add_customer') }}" class="block navbar-item">افزودن مشتری</a>
-            <a href="{{ url_for('add_transaction') }}" class="block navbar-item">افزودن تراکنش</a>
-            <a href="{{ url_for('reports') }}" class="block navbar-item">گزارش‌ها</a>
+                <span>افزودن مشتری</span>
+            </a>
+            <a href="{{ url_for('add_transaction') }}" class="nav-item">
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>افزودن تراکنش</span>
+            </a>
+            <a href="{{ url_for('reports') }}" class="nav-item">
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-6m3 6v-8m-6 2v6m-3 2v-4m6 4v-8m3 8v-6" />
+                </svg>
+                <span>گزارش‌ها</span>
+            </a>
         </div>
     </nav>
 
-    <div class="container mx-auto p-4 pt-20">
+    <nav class="nav-bottom">
+        <a href="{{ url_for('index') }}" class="nav-item">
+            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>خانه</span>
+        </a>
+        <a href="{{ url_for('add_customer') }}" class="nav-item">
+            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <span>مشتری</span>
+        </a>
+        <a href="{{ url_for('add_transaction') }}" class="nav-item">
+            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>تراکنش</span>
+        </a>
+        <a href="{{ url_for('reports') }}" class="nav-item">
+            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-6m3 6v-8m-6 2v6m-3 2v-4m6 4v-8m3 8v-6" />
+            </svg>
+            <span>گزارش</span>
+        </a>
+    </nav>
+
+    <div class="container mx-auto p-4 pt-6 md:pr-72 pb-24">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }} shadow-md animate-fade-in">
-                        {{ message }}
+                    <div class="glass-card mb-4 animate-slide-in">
+                        <div class="p-4 rounded-lg {{ 'bg-green-500 bg-opacity-20 text-green-200' if category == 'success' else 'bg-red-500 bg-opacity-20 text-red-200' }}">
+                            {{ message }}
+                        </div>
                     </div>
                 {% endfor %}
             {% endif %}
         {% endwith %}
 
-        <div class="card">
-            <h2 class="text-xl font-semibold mb-4">جزئیات مشتری: {{ customer.name }}</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <p><strong>نام:</strong> {{ customer.name }}</p>
-                <p><strong>تلفن:</strong> {{ customer.phone }}</p>
-                <p><strong>مانده حساب:</strong> {{ '{:,.0f}'.format(customer.balance) }} تومان</p>
-                <p><strong>وضعیت:</strong> <span class="{{ 'text-red-500' if customer.balance > 0 else 'text-green-500' }}">{{ customer.balance_status }}</span></p>
-                <p><strong>جمع خریدها:</strong> {{ '{:,.0f}'.format(customer.total_credit) }} تومان</p>
-                <p><strong>جمع پرداخت‌ها:</strong> {{ '{:,.0f}'.format(customer.total_debit) }} تومان</p>
+        <div class="glass-card animate-slide-in">
+            <h2 class="text-2xl font-bold mb-6 text-yellow-300">جزئیات مشتری: {{ customer.name }}</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div class="p-4 bg-gray-800 bg-opacity-30 rounded-xl">
+                    <p class="text-lg"><strong>نام:</strong> {{ customer.name }}</p>
+                    <p class="text-lg"><strong>تلفن:</strong> {{ customer.phone }}</p>
+                    <p class="text-lg"><strong>مانده حساب:</strong> {{ '{:,.0f}'.format(customer.balance) }} تومان</p>
+                    <p class="text-lg"><strong>وضعیت:</strong> <span class="{{ 'text-red-400' if customer.balance > 0 else 'text-green-400' }}">{{ customer.balance_status }}</span></p>
+                </div>
+                <div class="p-4 bg-gray-800 bg-opacity-30 rounded-xl">
+                    <p class="text-lg"><strong>جمع خریدها:</strong> {{ '{:,.0f}'.format(customer.total_credit) }} تومان</p>
+                    <p class="text-lg"><strong>جمع پرداخت‌ها:</strong> {{ '{:,.0f}'.format(customer.total_debit) }} تومان</p>
+                </div>
             </div>
-            <div class="mb-4 flex space-x-4">
-                <a href="{{ url_for('send_sms_route', customer_id=customer.id) }}" class="btn-primary">ارسال پیامک</a>
-                <a href="{{ url_for('send_whatsapp', customer_id=customer.id) }}" class="btn-secondary">ارسال واتس‌اپ</a>
+            <div class="mb-6 flex space-x-4">
+                <a href="{{ url_for('send_sms_route', customer_id=customer.id) }}" class="btn-secondary">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                    </svg>
+                    <span>ارسال پیامک</span>
+                </a>
+                <a href="{{ url_for('send_whatsapp', customer_id=customer.id) }}" class="btn-primary">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                    </svg>
+                    <span>ارسال واتس‌اپ</span>
+                </a>
             </div>
             <div>
-                <h3 class="text-lg font-semibold mb-2">تراکنش‌ها</h3>
+                <h3 class="text-xl font-bold mb-4 text-yellow-300">تراکنش‌ها</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right">
                         <thead class="table-header">
@@ -123,7 +173,7 @@
                                 <td class="p-3">{{ transaction.transaction_type }}</td>
                                 <td class="p-3">
                                     {% if transaction.photo %}
-                                        <a href="{{ url_for('static', filename='uploads/' + transaction.photo) }}" target="_blank" class="text-blue-600 hover:underline">نمایش</a>
+                                        <a href="{{ url_for('static', filename='uploads/' + transaction.photo) }}" target="_blank" class="btn-secondary text-xs">نمایش</a>
                                     {% else %}
                                         -
                                     {% endif %}
@@ -136,12 +186,5 @@
             </div>
         </div>
     </div>
-
-    <script>
-        function toggleMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-        }
-    </script>
 </body>
 </html>

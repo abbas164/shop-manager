@@ -47,60 +47,84 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="min-h-screen">
-    <nav class="navbar">
-        <div class="container mx-auto p-4 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<body>
+    <nav class="nav-sidebar">
+        <div class="flex items-center space-x-3 mb-6 p-4">
+            <svg class="w-10 h-10 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            <h1 class="text-2xl font-bold text-teal-300">فروشگاه آزادی</h1>
+        </div>
+        <div class="space-y-2">
+            <a href="{{ url_for('index') }}" class="nav-item">
+                <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <h1 class="text-2xl font-bold">فروشگاه لوازم ساختمانی آزادی</h1>
-            </div>
-            <div class="hidden md:flex space-x-4">
-                <a href="{{ url_for('index') }}" class="navbar-item">صفحه اصلی</a>
-                <a href="{{ url_for('add_customer') }}" class="navbar-item">افزودن مشتری</a>
-                <a href="{{ url_for('add_transaction') }}" class="navbar-item">افزودن تراکنش</a>
-                <a href="{{ url_for('reports') }}" class="navbar-item btn-primary">گزارش‌ها</a>
-            </div>
-            <button class="md:hidden text-white focus:outline-none" onclick="toggleMenu()">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                <span>صفحه اصلی</span>
+            </a>
+            <a href="{{ url_for('add_customer') }}" class="nav-item">
+                <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
-            </button>
-        </div>
-        <div id="mobile-menu" class="hidden md:hidden navbar-mobile">
-            <a href="{{ url_for('index') }}" class="block navbar-item">صفحه اصلی</a>
-            <a href="{{ url_for('add_customer') }}" class="block navbar-item">افزودن مشتری</a>
-            <a href="{{ url_for('add_transaction') }}" class="block navbar-item">افزودن تراکنش</a>
-            <a href="{{ url_for('reports') }}" class="block navbar-item btn-primary">گزارش‌ها</a>
+                <span>افزودن مشتری</span>
+            </a>
+            <a href="{{ url_for('add_transaction') }}" class="nav-item">
+                <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                <span>افزودن تراکنش</span>
+            </a>
+            <a href="{{ url_for('reports') }}" class="nav-item btn-primary">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-6m3 6v-8m-6 2v6m-3 2v-4m6 4v-8m3 8v-6" />
+                </svg>
+                <span>گزارش‌ها</span>
+            </a>
         </div>
     </nav>
 
-    <div class="container mx-auto p-4 pt-20">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {{ 'bg-green-100 text-green-700' if category == 'success' else 'bg-red-100 text-red-700' }} shadow-md animate-fade-in">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+    <nav class="nav-bottom">
+        <a href="{{ url_for('index') }}" class="nav-item">
+            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>خانه</span>
+        </a>
+        <a href="{{ url_for('add_customer') }}" class="nav-item">
+            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+            <span>مشتری</span>
+        </a>
+        <a href="{{ url_for('add_transaction') }}" class="nav-item">
+            <svg class="w-6 h-6 text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <span>تراکنش</span>
+        </a>
+        <a href="{{ url_for('reports') }}" class="nav-item btn-primary">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-6m3 6v-8m-6 2v6m-3 2v-4m6 4v-8m3 8v-6" />
+            </svg>
+            <span>گزارش</span>
+        </a>
+    </nav>
 
-        <div class="card">
-            <h2 class="text-xl font-semibold mb-4">گزارش‌های مالی</h2>
+    <div class="container mx-auto p-4 pt-6 md:pr-72 pb-20">
+        <div class="glass-card animate-slide-up">
+            <h2 class="text-2xl font-bold text-teal-300 mb-4">گزارش‌های مالی</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg shadow-sm">
-                    <h3 class="text-lg font-semibold mb-2">جمع کل بدهی‌ها</h3>
+                <div class="glass-card p-4">
+                    <h3 class="text-lg font-semibold text-teal-300 mb-2">جمع کل بدهی‌ها</h3>
                     <p class="text-xl">{{ '{:,.0f}'.format(total_debt) }} تومان</p>
                 </div>
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg shadow-sm">
-                    <h3 class="text-lg font-semibold mb-2">تعداد بدهکاران</h3>
+                <div class="glass-card p-4">
+                    <h3 class="text-lg font-semibold text-teal-300 mb-2">تعداد بدهکاران</h3>
                     <p class="text-xl">{{ debtor_count }} نفر</p>
                 </div>
             </div>
             <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-2">۵ بدهکار برتر</h3>
+                <h3 class="text-lg font-semibold text-teal-300 mb-2">۵ بدهکار برتر</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right">
                         <thead class="table-header">
@@ -123,7 +147,7 @@
                 </div>
             </div>
             <div class="mb-6">
-                <h3 class="text-lg font-semibold mb-2">مشتریان با بدهی بیش از ۳۰ روز</h3>
+                <h3 class="text-lg font-semibold text-teal-300 mb-2">مشتریان با بدهی بیش از ۳۰ روز</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right">
                         <thead class="table-header">
@@ -148,7 +172,7 @@
                 </div>
             </div>
             <div>
-                <h3 class="text-lg font-semibold mb-2">جزئیات حساب مشتریان</h3>
+                <h3 class="text-lg font-semibold text-teal-300 mb-2">جزئیات حساب مشتریان</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-right">
                         <thead class="table-header">
@@ -165,7 +189,7 @@
                                 <td class="p-3">{{ customer.name }}</td>
                                 <td class="p-3">{{ customer.phone }}</td>
                                 <td class="p-3">{{ '{:,.0f}'.format(customer.balance_display) }} تومان</td>
-                                <td class="p-3 {{ 'text-red-500' if customer.balance > 0 else 'text-green-500' }}">{{ customer.balance_status }}</td>
+                                <td class="p-3 {{ 'text-red-400' if customer.balance > 0 else 'text-green-400' }}">{{ customer.balance_status }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -176,10 +200,12 @@
     </div>
 
     <script>
-        function toggleMenu() {
-            const menu = document.getElementById('mobile-menu');
-            menu.classList.toggle('hidden');
-        }
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.animate-slide-up');
+            cards.forEach(card => {
+                setTimeout(() => card.classList.add('opacity-100'), 100);
+            });
+        });
     </script>
 </body>
 </html>
